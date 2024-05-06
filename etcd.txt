@@ -1,0 +1,123 @@
+* * 5.2.20. Encrypting the ETCD data
+• Edit the apiserver object & make an entry under spec as shown below
+[igaocpadmin@iga-ocp-ubh01 ~]$ oc edit apiserver
+...
+...
+spec:
+encryption:
+type: aescbc
+audit:
+profile: Default
+• Verify if all the resource under openshiftapiserver and kubeapiserver are encrypted as shown
+below
+[igaocpadmin@iga-ocp-ubh01 ~]$ oc get openshiftapiserver -o=jsonpath='{range .items[0].status.conditions[?(@.type=="Encrypted")]}{.reason}{"\n"}{.message}{"\n"}'
+EncryptionCompleted
+All resources encrypted: routes.route.openshift.io, oauthaccesstokens.oauth.openshift.io, oauthauthorizetokens.oauth.openshift.io
+
+[dbpuser@bastion ~]$ oc get co
+NAME                                       VERSION   AVAILABLE   PROGRESSING   DEGRADED   SINCE   MESSAGE
+authentication                             4.12.30   True        False         False      19m
+baremetal                                  4.12.30   True        False         False      3d15h
+cloud-controller-manager                   4.12.30   True        False         False      3d16h
+cloud-credential                           4.12.30   True        False         False      3d22h
+cluster-autoscaler                         4.12.30   True        False         False      3d15h
+config-operator                            4.12.30   True        False         False      3d16h
+console                                    4.12.30   True        False         False      38m
+control-plane-machine-set                  4.12.30   True        False         False      3d15h
+csi-snapshot-controller                    4.12.30   True        False         False      37h
+dns                                        4.12.30   True        False         False      3d16h
+etcd                                       4.12.30   True        False         False      3d9h
+image-registry                             4.12.30   True        False         False      3d9h
+ingress                                    4.12.30   True        False         False      3d9h
+insights                                   4.12.30   True        False         False      3d15h
+kube-apiserver                             4.12.30   True        True          False      3d10h   NodeInstallerProgressing: 3 nodes are at revision 11; 0 nodes have achieved new revision 12
+kube-controller-manager                    4.12.30   True        False         False      3d10h
+kube-scheduler                             4.12.30   True        False         False      3d15h
+kube-storage-version-migrator              4.12.30   True        False         False      25h
+machine-api                                4.12.30   True        False         False      3d15h
+machine-approver                           4.12.30   True        False         False      3d16h
+machine-config                             4.12.30   True        False         False      3d15h
+marketplace                                4.12.30   True        False         False      3d15h
+monitoring                                 4.12.30   True        False         False      11h
+network                                    4.12.30   True        False         False      3d16h
+node-tuning                                4.12.30   True        False         False      3d15h
+openshift-apiserver                        4.12.30   True        False         False      11h
+openshift-controller-manager               4.12.30   True        False         False      3d15h
+openshift-samples                          4.12.30   True        False         False      2d23h
+operator-lifecycle-manager                 4.12.30   True        False         False      3d15h
+operator-lifecycle-manager-catalog         4.12.30   True        False         False      3d16h
+operator-lifecycle-manager-packageserver   4.12.30   True        False         False      3d1h
+service-ca                                 4.12.30   True        False         False      3d16h
+storage                                    4.12.30   True        False         False      3d16h
+[igaocpadmin@iga-ocp-ubh01 ~]$ oc get kubeapiserver -o=jsonpath='{range .items[0].status.conditions[?(@.type=="Encrypted")]}{.reason}{"\n"}{.message}{"\n"}'
+EncryptionCompleted
+All resources encrypted: secrets, configmap
+[dbpuser@bastion ~]$ ssh -i ~/.ssh/ocp4 core@master1.prod.dbp.pnb
+Red Hat Enterprise Linux CoreOS 412.86.202308161343-0
+  Part of OpenShift 4.12, RHCOS is a Kubernetes native operating system
+  managed by the Machine Config Operator (`clusteroperator/machine-config`).
+
+WARNING: Direct SSH access to machines is not recommended; instead,
+make configuration changes via `machineconfig` objects:
+  https://docs.openshift.com/container-platform/4.12/architecture/architecture-rhcos.html
+
+---
+Last login: Tue Apr 30 20:10:23 2024 from 10.192.242.171
+[core@master1 ~]$ sudo /usr/local/bin/cluster-
+cluster-backup.sh   cluster-restore.sh
+[core@master1 ~]$ sudo /usr/local/bin/cluster-backup.sh ^C
+[core@master1 ~]$ pwd
+/var/home/core
+[core@master1 ~]$ mkdir -p assets/backup
+[core@master1 ~]$ ll
+total 0
+drwxrwxr-x. 3 core core 20 May  1 14:50 assets
+[core@master1 ~]$ cd assets/
+[core@master1 assets]$ ll
+total 0
+drwxrwxr-x. 2 core core 6 May  1 14:50 backup
+[core@master1 assets]$ cd
+[core@master1 ~]$ sudo /usr/local/bin/
+cluster-backup.sh         cluster-restore.sh        configure-ovs.sh          kubenswrapper             mco-hostname              nm-clean-initrd-state.sh  recover-kubeconfig.sh
+[core@master1 ~]$ sudo /usr/local/bin/cluster-backup.sh /home/core/assets/backup/
+Certificate /etc/kubernetes/static-pod-certs/configmaps/etcd-serving-ca/ca-bundle.crt is missing. Checking in different directory
+Certificate /etc/kubernetes/static-pod-resources/etcd-certs/configmaps/etcd-serving-ca/ca-bundle.crt found!
+found latest kube-apiserver: /etc/kubernetes/static-pod-resources/kube-apiserver-pod-12
+found latest kube-controller-manager: /etc/kubernetes/static-pod-resources/kube-controller-manager-pod-6
+found latest kube-scheduler: /etc/kubernetes/static-pod-resources/kube-scheduler-pod-6
+found latest etcd: /etc/kubernetes/static-pod-resources/etcd-pod-7
+50caceed646b9b2f52d0dacba2f5abf148fe2e38a153a3fe83f4a42457d07bee
+etcdctl version: 3.5.9
+API version: 3.5
+{"level":"info","ts":"2024-05-01T14:51:06.81604+0530","caller":"snapshot/v3_snapshot.go:65","msg":"created temporary db file","path":"/home/core/assets/backup//snapshot_2024-05-01_145106.db.part"}
+{"level":"info","ts":"2024-05-01T14:51:06.820891+0530","logger":"client","caller":"v3@v3.5.9/maintenance.go:212","msg":"opened snapshot stream; downloading"}
+{"level":"info","ts":"2024-05-01T14:51:06.820916+0530","caller":"snapshot/v3_snapshot.go:73","msg":"fetching snapshot","endpoint":"https://10.192.242.196:2379"}
+{"level":"info","ts":"2024-05-01T14:51:07.311314+0530","logger":"client","caller":"v3@v3.5.9/maintenance.go:220","msg":"completed snapshot read; closing"}
+{"level":"info","ts":"2024-05-01T14:51:07.326594+0530","caller":"snapshot/v3_snapshot.go:88","msg":"fetched snapshot","endpoint":"https://10.192.242.196:2379","size":"105 MB","took":"now"}
+{"level":"info","ts":"2024-05-01T14:51:07.326649+0530","caller":"snapshot/v3_snapshot.go:97","msg":"saved","path":"/home/core/assets/backup//snapshot_2024-05-01_145106.db"}
+Snapshot saved at /home/core/assets/backup//snapshot_2024-05-01_145106.db
+Deprecated: Use `etcdutl snapshot status` instead.
+
+{"hash":1310400836,"revision":7326391,"totalKey":8544,"totalSize":104718336}
+snapshot db and kube resources are successfully saved to /home/core/assets/backup/
+[core@master1 ~]$ sudo chown core -R assets/
+[core@master1 ~]$ logout
+Connection to master1.prod.dbp.pnb closed.
+[dbpuser@bastion ~]$ mkdir ETCD-Backup-01-05-2024
+[dbpuser@bastion ~]$ cd ETCD-Backup-01-05-2024/
+[dbpuser@bastion ETCD-Backup-01-05-2024]$ scp -r -i ~/.ssh/ocp4 core@master1.prod.dbp.pnb:/assets/.
+usage: scp [-346BCpqrTv] [-c cipher] [-F ssh_config] [-i identity_file]
+            [-J destination] [-l limit] [-o ssh_option] [-P port]
+            [-S program] source ... target
+[dbpuser@bastion ETCD-Backup-01-05-2024]$ scp -r -i ~/.ssh/ocp4 core@master1.prod.dbp.pnb:/assets/ .
+scp: /assets: No such file or directory
+[dbpuser@bastion ETCD-Backup-01-05-2024]$ scp -r -i ~/.ssh/ocp4 core@master1.prod.dbp.pnb:~/assets/ .
+static_kuberesources_2024-05-01_145106.tar.gz                                                                                                                                                              100%   72KB  42.8MB/s   00:00
+snapshot_2024-05-01_145106.db                                                                                                                                                                              100%  100MB 696.7MB/s   00:00
+[dbpuser@bastion ETCD-Backup-01-05-2024]$ LL
+bash: LL: command not found...
+^C
+[dbpuser@bastion ETCD-Backup-01-05-2024]$ ll
+total 0
+drwxrwxr-x. 3 dbpuser dbpuser 20 May  1 14:53 assets
+[dbpuser@bastion ETCD-Backup-01-05-2024]$
