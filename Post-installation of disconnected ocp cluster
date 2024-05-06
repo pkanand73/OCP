@@ -1,1 +1,16 @@
-
+NTP/Chrony configuration
+internal image registry(object storage)
+LDAP integration
+htpasswd configuration
+multi-tenant
+Alert-manager Configuration(SMTP)
+ELK
+AMQ-Streams
+ETCD BAckup & Data Encryption
+Default route configuration for internal registry
+worker label removal from 2 master nodes
+Adding infra label to one of the master nodes
+Catalogue source creation 
+LVM storage configuration(using 8.7TB of nodes)
+Cluster Registration into [https://cloud.redhat.com/openshift]
+Users & Namespaces creation[different environment i.e DR]
